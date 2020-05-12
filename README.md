@@ -55,7 +55,13 @@ raylib uses internally several single-file header-only libraries to support diff
 
 *On Android platform, `native_app_glue` module (provided by Android NDK) and native Android libraries are used to manage window/context, inputs and activity life cycle.*
 
-*On Raspberry Pi platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries*
+*On Raspberry Pi platform (native mode), `Videocore API` and `EGL` libraries are used for window/context management. Inputs are processed using `evdev` Linux libraries.
+To build for the Raspberry Pi 4:*
+```
+cd src
+make PLATFORM=PLATFORM_RPI RPI_VERSION=RPI_VERSION_4
+```
+
 
 *On Web platform, raylib uses `emscripten` provided libraries for several input events management, specially noticeable the touch events support.*
 

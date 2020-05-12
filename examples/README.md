@@ -2,6 +2,12 @@
 
 ### category: core
 
+
+To build for the Raspberry Pi 4:
+```
+cd examples
+make PLATFORM=PLATFORM_RPI RPI_VERSION=RPI_VERSION_4
+```
 Examples using raylib core platform functionality like window creation, inputs, drawing modes and system functionality.
 
 | ## | example  | image  | developer  | new |
