@@ -26,6 +26,10 @@
 *       Windowing and input system configured for Raspberry Pi i native mode (no X.org required, tested on Raspbian),
 *       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
 *
+*   #define RPI_VERSION_4 - (Work in Progress)
+*       Windowing and input system configured for Raspberry Pi4 i native mode (no X.org required, tested on Raspbian),
+*       graphic device is managed by EGL and inputs are processed is raw mode, reading from /dev/input/
+*
 *   #define PLATFORM_WEB
 *       Windowing and input system configured for HTML5 (run on browser), code converted from C to asm.js
 *       using emscripten compiler. OpenGL ES 2.0 required for direct translation to WebGL equivalent code.
@@ -117,15 +121,15 @@
 
 // Check if config flags have been externally provided on compilation line
 #if !defined(EXTERNAL_CONFIG_FLAGS)
-    #include "config.h"             // Defines module configuration flags
+#include "config.h"             // Defines module configuration flags
 #else
-    #define RAYLIB_VERSION  "3.0"
+#define RAYLIB_VERSION  "3.0"
 #endif
 
 #include "utils.h"                  // Required for: TRACELOG macros
 
 #if (defined(__linux__) || defined(PLATFORM_WEB)) && _POSIX_C_SOURCE < 199309L
-    #undef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
     #define _POSIX_C_SOURCE 199309L // Required for CLOCK_MONOTONIC if compiled with c99 without gnu ext.
 #endif
 
@@ -136,17 +140,17 @@
 #include "rlgl.h"                   // raylib OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
-    #define GESTURES_IMPLEMENTATION
-    #include "gestures.h"           // Gestures detection functionality
+#define GESTURES_IMPLEMENTATION
+#include "gestures.h"           // Gestures detection functionality
 #endif
 
 #if defined(SUPPORT_CAMERA_SYSTEM)
-    #define CAMERA_IMPLEMENTATION
-    #include "camera.h"             // Camera system functionality
+#define CAMERA_IMPLEMENTATION
+#include "camera.h"             // Camera system functionality
 #endif
 
 #if defined(SUPPORT_GIF_RECORDING)
-    #define RGIF_MALLOC RL_MALLOC
+#define RGIF_MALLOC RL_MALLOC
     #define RGIF_FREE RL_FREE
 
     #define RGIF_IMPLEMENTATION
@@ -162,27 +166,27 @@
 #include <sys/stat.h>               // Required for: stat() [Used in GetFileModTime()]
 
 #if (defined(PLATFORM_DESKTOP) || defined(PLATFORM_UWP)) && defined(_WIN32) && (defined(_MSC_VER) || defined(__TINYC__))
-    #define DIRENT_MALLOC RL_MALLOC
+#define DIRENT_MALLOC RL_MALLOC
     #define DIRENT_FREE RL_FREE
 
     #include "external/dirent.h"    // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #else
-    #include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
+#include <dirent.h>             // Required for: DIR, opendir(), closedir() [Used in GetDirectoryFiles()]
 #endif
 
 #if defined(_WIN32)
-    #include <direct.h>             // Required for: _getch(), _chdir()
+#include <direct.h>             // Required for: _getch(), _chdir()
     #define GETCWD _getcwd          // NOTE: MSDN recommends not to use getcwd(), chdir()
     #define CHDIR _chdir
     #include <io.h>                 // Required for _access() [Used in FileExists()]
 #else
-    #include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
-    #define GETCWD getcwd
-    #define CHDIR chdir
+#include <unistd.h>             // Required for: getch(), chdir() (POSIX), access()
+#define GETCWD getcwd
+#define CHDIR chdir
 #endif
 
 #if defined(PLATFORM_DESKTOP)
-    #define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
+#define GLFW_INCLUDE_NONE       // Disable the standard OpenGL header inclusion on GLFW3
                                     // NOTE: Already provided by rlgl implementation (on glad.h)
     #include <GLFW/glfw3.h>         // GLFW3 library: Windows, OpenGL context and Input management
                                     // NOTE: GLFW3 already includes gl.h (OpenGL) headers
@@ -214,7 +218,7 @@
 #endif
 
 #if defined(PLATFORM_ANDROID)
-    //#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
+//#include <android/sensor.h>           // Android sensors functions (accelerometer, gyroscope, light...)
     #include <android/window.h>             // Defines AWINDOW_FLAG_FULLSCREEN and others
     #include <android_native_app_glue.h>    // Defines basic app state struct and manages activity
 
@@ -223,33 +227,39 @@
 #endif
 
 #if defined(PLATFORM_RPI)
-    #include <fcntl.h>                  // POSIX file control definitions - open(), creat(), fcntl()
+#include <fcntl.h>                  // POSIX file control definitions - open(), creat(), fcntl()
     #include <unistd.h>                 // POSIX standard function definitions - read(), close(), STDIN_FILENO
     #include <termios.h>                // POSIX terminal control definitions - tcgetattr(), tcsetattr()
     #include <pthread.h>                // POSIX threads management (inputs reading)
     #include <dirent.h>                 // POSIX directory browsing
-    
+
     #include <sys/ioctl.h>              // UNIX System call for device-specific input/output operations - ioctl()
     #include <linux/kd.h>               // Linux: KDSKBMODE, K_MEDIUMRAM constants definition
     #include <linux/input.h>            // Linux: Keycodes constants definition (KEY_A, ...)
     #include <linux/joystick.h>         // Linux: Joystick support library
-    
+
     #include "bcm_host.h"               // Raspberry Pi VideoCore IV access functions
-    
+
     #include "EGL/egl.h"                // EGL library - Native platform display device control functions
     #include "EGL/eglext.h"             // EGL library - Extensions
     #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
 #endif
 
+#if defined(RPI_VERSION_4)
+#include <xf86drm.h>
+    #include <xf86drmMode.h>
+    #include <gbm.h>
+#endif
+
 #if defined(PLATFORM_UWP)
-    #include "EGL/egl.h"                // EGL library - Native platform display device control functions
+#include "EGL/egl.h"                // EGL library - Native platform display device control functions
     #include "EGL/eglext.h"             // EGL library - Extensions
     #include "GLES2/gl2.h"              // OpenGL ES 2.0 library
     #include "uwp_events.h"             // UWP bootstrapping functions
 #endif
 
 #if defined(PLATFORM_WEB)
-    #define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
+#define GLFW_INCLUDE_ES2            // GLFW3: Enable OpenGL ES 2.0 (translated to WebGL)
     #include <GLFW/glfw3.h>             // GLFW3 library: Windows, OpenGL context and Input management
     #include <sys/time.h>               // Required for: timespec, nanosleep(), select() - POSIX
 
@@ -258,16 +268,16 @@
 #endif
 
 #if defined(SUPPORT_COMPRESSION_API)
-    // NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
-    unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
-    char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
+// NOTE: Those declarations require stb_image and stb_image_write definitions, included in textures module
+unsigned char *stbi_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
+char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen);
 #endif
 
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
 #if defined(PLATFORM_RPI)
-    #define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
+#define USE_LAST_TOUCH_DEVICE       // When multiple touchscreens are connected, only use the one with the highest event<N> number
 
     // Old device inputs system
     #define DEFAULT_KEYBOARD_DEV      STDIN_FILENO              // Standard input
@@ -281,33 +291,33 @@
 #endif
 
 #ifndef MAX_FILEPATH_LENGTH
-    #if defined(__linux__)
-        #define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
-    #else
-        #define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
-    #endif
+#if defined(__linux__)
+#define MAX_FILEPATH_LENGTH     4096        // Maximum length for filepaths (Linux PATH_MAX default value)
+#else
+#define MAX_FILEPATH_LENGTH      512        // Maximum length supported for filepaths
+#endif
 #endif
 
 #ifndef MAX_GAMEPADS
-    #define MAX_GAMEPADS                   4        // Max number of gamepads supported
+#define MAX_GAMEPADS                   4        // Max number of gamepads supported
 #endif
 #ifndef MAX_GAMEPAD_AXIS
-    #define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
+#define MAX_GAMEPAD_AXIS               8        // Max number of axis supported (per gamepad)
 #endif
 #ifndef MAX_GAMEPAD_BUTTONS
-    #define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
+#define MAX_GAMEPAD_BUTTONS           32        // Max bumber of buttons supported (per gamepad)
 #endif
 #ifndef MAX_TOUCH_POINTS
-    #define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
+#define MAX_TOUCH_POINTS              10        // Maximum number of touch points supported
 #endif
 #ifndef MAX_KEY_PRESSED_QUEUE
-    #define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
+#define MAX_KEY_PRESSED_QUEUE         16        // Max number of characters in the key input queue
 #endif
 
 #if defined(SUPPORT_DATA_STORAGE)
-    #ifndef STORAGE_DATA_FILE
-        #define STORAGE_DATA_FILE  "storage.data"   // Automatic storage filename
-    #endif
+#ifndef STORAGE_DATA_FILE
+#define STORAGE_DATA_FILE  "storage.data"   // Automatic storage filename
+#endif
 #endif
 
 //----------------------------------------------------------------------------------
@@ -526,6 +536,75 @@ static EM_BOOL EmscriptenGamepadCallback(int eventType, const EmscriptenGamepadE
 #endif
 
 #if defined(PLATFORM_RPI)
+#if defined(RPI_VERSION_4)
+
+typedef struct DRM_MODE {
+    int device;
+    drmModeRes *resources;
+    drmModeConnector *connector;
+    uint32_t connector_id;
+    drmModeModeInfo info;
+    drmModeEncoder *encoder;
+    drmModeCrtc *crtc;
+} DRM_MODE;
+
+typedef struct GBM {
+    struct gbm_device *device;
+    struct gbm_surface *surface;
+    struct gbm_bo *previous_bo; // = NULL;
+    uint32_t previous_fb;
+} GBM;
+
+static DRM_MODE drmMode = { 0 };
+static GBM gbm = { 0 };
+
+static drmModeConnector *find_connector (drmModeRes *resources) {
+    for (int i=0; i<resources->count_connectors; i++) {
+        drmModeConnector *connector = drmModeGetConnector (drmMode.device, resources->connectors[i]);
+        if (connector->connection == DRM_MODE_CONNECTED) {return connector;}
+        drmModeFreeConnector (connector);
+    }
+    return NULL; // if no connector found
+}
+
+static drmModeEncoder *find_encoder (drmModeRes *resources, drmModeConnector *connector) {
+    if (connector->encoder_id) {
+        return drmModeGetEncoder (drmMode.device, connector->encoder_id);
+    }
+    return NULL; // if no encoder found
+}
+
+static int match_config_to_visual(EGLDisplay egl_display, EGLint visual_id, EGLConfig *configs, int count) {
+
+EGLint id;
+for (int i = 0; i < count; ++i) {
+  if (!eglGetConfigAttrib(egl_display, configs[i], EGL_NATIVE_VISUAL_ID,&id)) continue;
+  if (id == visual_id) return i;
+  }
+return -1;
+}
+
+
+static void v3d_swap_buffers () {
+    int32_t fb;
+    static struct gbm_bo *bo;
+    eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+    bo = gbm_surface_lock_front_buffer (gbm.surface);
+    uint32_t handle = gbm_bo_get_handle (bo).u32;
+    uint32_t pitch = gbm_bo_get_stride (bo);
+    drmModeAddFB (drmMode.device, drmMode.info.hdisplay, drmMode.info.vdisplay, 24, 32, pitch, handle, &fb);
+    drmModeSetCrtc (drmMode.device, drmMode.crtc->crtc_id, fb, 0, 0, &drmMode.connector_id, 1, &drmMode.info);
+    if (gbm.previous_bo) {
+      drmModeRmFB (drmMode.device, gbm.previous_fb);
+      gbm_surface_release_buffer (gbm.surface, gbm.previous_bo);
+      }
+
+    gbm.previous_bo = bo;
+    gbm.previous_fb = fb;
+}
+
+#endif
+
 #if defined(SUPPORT_SSH_KEYBOARD_RPI)
 static void InitKeyboard(void);                         // Init raw keyboard system (standard input reading)
 static void ProcessKeyboard(void);                      // Process keyboard events
@@ -544,7 +623,7 @@ static void *GamepadThread(void *arg);                  // Mouse reading thread
 #endif  // PLATFORM_RPI
 
 #if defined(_WIN32)
-    // NOTE: We include Sleep() function signature here to avoid windows.h inclusion
+// NOTE: We include Sleep() function signature here to avoid windows.h inclusion
     void __stdcall Sleep(unsigned long msTimeout);      // Required for Wait()
 #endif
 
@@ -788,14 +867,32 @@ void CloseWindow(void)
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
     // Close surface, context and display
+        TRACELOG(LOG_INFO, "CLEANUP");
+
     if (CORE.Window.device != EGL_NO_DISPLAY)
     {
         eglMakeCurrent(CORE.Window.device, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
         if (CORE.Window.surface != EGL_NO_SURFACE)
         {
+
+            #if defined(RPI_VERSION_4)
+//            free(egl_configs);
+            drmModeSetCrtc (CORE.Window.device, drmMode.crtc->crtc_id, drmMode.crtc->buffer_id, drmMode.crtc->x, drmMode.crtc->y, &drmMode.connector_id, 1, &drmMode.crtc->mode);
+            drmModeFreeCrtc (drmMode.crtc);
+            if (gbm.previous_bo) {
+                drmModeRmFB (drmMode.device, gbm.previous_fb);
+                gbm_surface_release_buffer (gbm.surface, gbm.previous_bo);
+            }
+
+            #endif
+
             eglDestroySurface(CORE.Window.device, CORE.Window.surface);
             CORE.Window.surface = EGL_NO_SURFACE;
+
+            #if defined(RPI_VERSION_4)
+            gbm_surface_destroy (gbm.surface);
+            #endif
         }
 
         if (CORE.Window.context != EGL_NO_CONTEXT)
@@ -806,6 +903,10 @@ void CloseWindow(void)
 
         eglTerminate(CORE.Window.device);
         CORE.Window.device = EGL_NO_DISPLAY;
+        #if defined(RPI_VERSION_4)
+        gbm_device_destroy (gbm.device);
+        #endif
+
     }
 #endif
 
@@ -1178,7 +1279,7 @@ Vector2 GetWindowPosition(void)
 Vector2 GetWindowScaleDPI(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
-    
+
 #if defined(PLATFORM_DESKTOP)
     GLFWmonitor *monitor = glfwGetPrimaryMonitor();
 
@@ -1302,7 +1403,7 @@ void BeginDrawing(void)
     rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
-                                        // NOTE: Not required with OpenGL 3.3+
+    // NOTE: Not required with OpenGL 3.3+
 }
 
 // End canvas drawing and swap buffers (double buffering)
@@ -1676,9 +1777,9 @@ void SetTargetFPS(int fps)
 // NOTE: We calculate an average framerate
 int GetFPS(void)
 {
-    #define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
-    #define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
-    #define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
+#define FPS_CAPTURE_FRAMES_COUNT    30      // 30 captures
+#define FPS_AVERAGE_TIME_SECONDS   0.5f     // 500 millisecondes
+#define FPS_STEP (FPS_AVERAGE_TIME_SECONDS/FPS_CAPTURE_FRAMES_COUNT)
 
     static int index = 0;
     static float history[FPS_CAPTURE_FRAMES_COUNT] = { 0 };
@@ -2019,7 +2120,7 @@ const char *GetFileName(const char *filePath)
 // Get filename string without extension (uses static string)
 const char *GetFileNameWithoutExt(const char *filePath)
 {
-    #define MAX_FILENAMEWITHOUTEXT_LENGTH   128
+#define MAX_FILENAMEWITHOUTEXT_LENGTH   128
 
     static char fileName[MAX_FILENAMEWITHOUTEXT_LENGTH];
     memset(fileName, 0, MAX_FILENAMEWITHOUTEXT_LENGTH);
@@ -2115,7 +2216,7 @@ const char *GetWorkingDirectory(void)
 // NOTE: Files count is returned by parameters pointer
 char **GetDirectoryFiles(const char *dirPath, int *fileCount)
 {
-    #define MAX_DIRECTORY_FILES     512
+#define MAX_DIRECTORY_FILES     512
 
     ClearDirectoryFiles();
 
@@ -2213,7 +2314,7 @@ long GetFileModTime(const char *fileName)
 // Compress data (DEFLATE algorythm)
 unsigned char *CompressData(unsigned char *data, int dataLength, int *compDataLength)
 {
-    #define COMPRESSION_QUALITY_DEFLATE  8
+#define COMPRESSION_QUALITY_DEFLATE  8
 
     unsigned char *compData = NULL;
 
@@ -2271,13 +2372,13 @@ void SaveStorageValue(unsigned int position, int value)
             {
                 // RL_REALLOC succeded
                 int *dataPtr = (int *)newFileData;
-                dataPtr[position] = value;  
+                dataPtr[position] = value;
             }
             else
             {
                 // RL_REALLOC failed
-                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));  
-                
+                TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to realloc data (%u), position in bytes (%u) bigger than actual file size", path, dataSize, position*sizeof(int));
+
                 // We store the old size of the file
                 newFileData = fileData;
                 newDataSize = dataSize;
@@ -3187,6 +3288,7 @@ static bool InitGraphicsDevice(int width, int height)
     //https://stackoverflow.com/questions/46550182/how-to-create-eglsurface-using-c-winrt-and-angle
 
     //CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, reinterpret_cast<IInspectable*>(surfaceCreationProperties), surfaceAttributes);
+
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, (EGLNativeWindowType) UWPGetCoreWindowPtr(), surfaceAttributes);
     if (CORE.Window.surface == EGL_NO_SURFACE)
     {
@@ -3210,11 +3312,34 @@ static bool InitGraphicsDevice(int width, int height)
 
 #endif  // PLATFORM_UWP
 
+#if defined(RPI_VERSION_4)
+
+    drmMode.device = open ("/dev/dri/card1", O_RDWR);
+    drmMode.resources = drmModeGetResources (drmMode.device);
+    drmMode.connector = find_connector (drmMode.resources);
+    drmMode.connector_id = drmMode.connector->connector_id;
+    drmMode.info = drmMode.connector->modes[0];
+    drmMode.encoder = find_encoder (drmMode.resources, drmMode.connector);
+    drmMode.crtc = drmModeGetCrtc (drmMode.device, drmMode.encoder->crtc_id);
+    drmModeFreeEncoder (drmMode.encoder);
+    drmModeFreeConnector (drmMode.connector);
+    drmModeFreeResources (drmMode.resources);
+    gbm.device = gbm_create_device (drmMode.device);
+    gbm.surface = gbm_surface_create (gbm.device, drmMode.info.hdisplay, drmMode.info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
+
+    #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
     EGLint numConfigs = 0;
 
     // Get an EGL device connection
+
+    #if defined(RPI_VERSION_4)
+
+    CORE.Window.device = eglGetDisplay(gbm.device); //(EGL_DEFAULT_DISPLAY);
+    #else
     CORE.Window.device = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    #endif
+
     if (CORE.Window.device == EGL_NO_DISPLAY)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to initialize EGL device");
@@ -3230,13 +3355,37 @@ static bool InitGraphicsDevice(int width, int height)
     }
 
     // Get an appropriate EGL framebuffer configuration
-    eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
+    #if defined(RPI_VERSION_4)
+    EGLint egl_num_config;
+    EGLint egl_count=0;
+    EGLConfig *egl_configs;
+    int egl_config_index;
 
+    if (!eglGetConfigs(CORE.Window.device, NULL, 0, &egl_count)) {
+            TRACELOG(LOG_FATAL, "Failed to retrieve EGL FrameBuffer configurations for specified display");
+    };
+    egl_configs = malloc(egl_count * sizeof *egl_configs);
+    if (!eglChooseConfig (CORE.Window.device, framebufferAttribs, egl_configs, egl_count, &egl_num_config)) {
+            TRACELOG(LOG_FATAL, "Failed to find any EGL FrameBuffer configurations with required attributes");
+    };
+
+    EGLint id;
+    egl_config_index = match_config_to_visual(CORE.Window.device,GBM_FORMAT_XRGB8888,egl_configs,egl_num_config);
+    if (egl_config_index == -1) {
+            TRACELOG(LOG_FATAL, "Failed to find a valid EGL FrameBuffer configuration for GBM_FORMAT_XRGB8888");
+    }
+    TRACELOG(LOG_DEBUG, "Matched eglConfig at index %i from %i",egl_config_index, egl_num_config);
+    CORE.Window.config = egl_configs[egl_config_index];
+
+    #else
+    eglChooseConfig(CORE.Window.device, framebufferAttribs, &CORE.Window.config, 1, &numConfigs);
+    #endif
     // Set rendering API
-    eglBindAPI(EGL_OPENGL_ES_API);
+    eglBindAPI(EGL_OPENGL_API); //EGL_OPENGL_ES_API);
 
     // Create an EGL rendering context
     CORE.Window.context = eglCreateContext(CORE.Window.device, CORE.Window.config, EGL_NO_CONTEXT, contextAttribs);
+
     if (CORE.Window.context == EGL_NO_CONTEXT)
     {
         TRACELOG(LOG_WARNING, "DISPLAY: Failed to create EGL context");
@@ -3265,7 +3414,7 @@ static bool InitGraphicsDevice(int width, int height)
 
 #if defined(PLATFORM_RPI)
     graphics_get_display_size(0, &CORE.Window.display.width, &CORE.Window.display.height);
-    
+
     // Screen size security check
     if (CORE.Window.screen.width <= 0) CORE.Window.screen.width = CORE.Window.display.width;
     if (CORE.Window.screen.height <= 0) CORE.Window.screen.height = CORE.Window.display.height;
@@ -3304,7 +3453,13 @@ static bool InitGraphicsDevice(int width, int height)
     CORE.Window.handle.height = CORE.Window.render.height;
     vc_dispmanx_update_submit_sync(dispmanUpdate);
 
+    #if defined(RPI_VERSION_4)
+    CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, gbm.surface, NULL);
+    free(egl_configs);
+    #else
     CORE.Window.surface = eglCreateWindowSurface(CORE.Window.device, CORE.Window.config, &CORE.Window.handle, NULL);
+    #endif
+
     //---------------------------------------------------------------------------------
 #endif  // PLATFORM_RPI
 
@@ -3501,16 +3656,16 @@ static void Wait(float ms)
     // Busy wait loop
     while ((nextTime - prevTime) < ms/1000.0f) nextTime = GetTime();
 #else
-    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
-        #define MAX_HALFBUSY_WAIT_TIME  4
-        double destTime = GetTime() + ms/1000;
-        if (ms > MAX_HALFBUSY_WAIT_TIME) ms -= MAX_HALFBUSY_WAIT_TIME;
-    #endif
+#if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
+#define MAX_HALFBUSY_WAIT_TIME  4
+    double destTime = GetTime() + ms/1000;
+    if (ms > MAX_HALFBUSY_WAIT_TIME) ms -= MAX_HALFBUSY_WAIT_TIME;
+#endif
 
-    #if defined(_WIN32)
-        Sleep((unsigned int)ms);
-    #elif defined(__linux__) || defined(PLATFORM_WEB)
-        struct timespec req = { 0 };
+#if defined(_WIN32)
+    Sleep((unsigned int)ms);
+#elif defined(__linux__) || defined(PLATFORM_WEB)
+    struct timespec req = { 0 };
         time_t sec = (int)(ms/1000.0f);
         ms -= (sec*1000);
         req.tv_sec = sec;
@@ -3518,13 +3673,13 @@ static void Wait(float ms)
 
         // NOTE: Use nanosleep() on Unix platforms... usleep() it's deprecated.
         while (nanosleep(&req, &req) == -1) continue;
-    #elif defined(__APPLE__)
-        usleep(ms*1000.0f);
-    #endif
+#elif defined(__APPLE__)
+    usleep(ms*1000.0f);
+#endif
 
-    #if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
-        while (GetTime() < destTime) { }
-    #endif
+#if defined(SUPPORT_HALFBUSY_WAIT_LOOP)
+    while (GetTime() < destTime) { }
+#endif
 #endif
 }
 
@@ -3686,7 +3841,7 @@ static void PollInputEvents(void)
             // Get remapped buttons
             GLFWgamepadstate state = { 0 };
             glfwGetGamepadState(i, &state); // This remapps all gamepads so they have their buttons mapped like an xbox controller
-            
+
             const unsigned char *buttons = state.buttons;
 
             for (int k = 0; (buttons != NULL) && (k < GLFW_GAMEPAD_BUTTON_DPAD_LEFT + 1) && (k < MAX_GAMEPAD_BUTTONS); k++)
@@ -3812,7 +3967,11 @@ static void SwapBuffers(void)
 #endif
 
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI) || defined(PLATFORM_UWP)
+    #if defined (RPI_VERSION_4)
+    v3d_swap_buffers();
+    #else
     eglSwapBuffers(CORE.Window.device, CORE.Window.surface);
+    #endif
 #endif
 }
 
@@ -4151,7 +4310,7 @@ static int32_t AndroidInputCallback(struct android_app *app, AInputEvent *event)
 
     if (type == AINPUT_EVENT_TYPE_MOTION)
     {
-        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) || 
+        if (((source & AINPUT_SOURCE_JOYSTICK) == AINPUT_SOURCE_JOYSTICK) ||
             ((source & AINPUT_SOURCE_GAMEPAD) == AINPUT_SOURCE_GAMEPAD))
         {
             // Get first touch position
