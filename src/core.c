@@ -3316,16 +3316,42 @@ static bool InitGraphicsDevice(int width, int height)
 
     drmMode.device = open ("/dev/dri/card1", O_RDWR);
     drmMode.resources = drmModeGetResources (drmMode.device);
+    if (drmMode.resources == NULL) {
+        drmMode.device = open ("/dev/dri/card0", O_RDWR);
+        drmMode.resources = drmModeGetResources (drmMode.device);
+        if (drmMode.resources == NULL) {
+            TRACELOG(LOG_FATAL, "kms: Unable to access GPU via DRM");
+        } else {
+            TRACELOG(LOG_INFO, "DRM: Using /dev/dri/card0", O_RDWR);
+        }
+    } else {
+        TRACELOG(LOG_INFO, "DRM: Using /dev/dri/card1", O_RDWR);
+    }
     drmMode.connector = find_connector (drmMode.resources);
+    if (drmMode.connector == NULL) {
+            TRACELOG(LOG_FATAL, "kms: Unable to find a valid connector");
+    }
     drmMode.connector_id = drmMode.connector->connector_id;
     drmMode.info = drmMode.connector->modes[0];
     drmMode.encoder = find_encoder (drmMode.resources, drmMode.connector);
+    if (drmMode.encoder == NULL) {
+            TRACELOG(LOG_FATAL, "kms: Unable to find a valid encoder");
+    }
     drmMode.crtc = drmModeGetCrtc (drmMode.device, drmMode.encoder->crtc_id);
+    if (drmMode.crtc == NULL) {
+            TRACELOG(LOG_FATAL, "kms: Unable to find a valid crtc");
+    }
     drmModeFreeEncoder (drmMode.encoder);
     drmModeFreeConnector (drmMode.connector);
     drmModeFreeResources (drmMode.resources);
     gbm.device = gbm_create_device (drmMode.device);
+    if (gbm.device == NULL) {
+            TRACELOG(LOG_FATAL, "gbm: Unable to create device");
+    }
     gbm.surface = gbm_surface_create (gbm.device, drmMode.info.hdisplay, drmMode.info.vdisplay, GBM_FORMAT_XRGB8888, GBM_BO_USE_SCANOUT|GBM_BO_USE_RENDERING);
+    if (gbm.surface == NULL) {
+            TRACELOG(LOG_FATAL, "gbm: Unable to create surface");
+    }
 
     #endif
 #if defined(PLATFORM_ANDROID) || defined(PLATFORM_RPI)
